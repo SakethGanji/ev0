@@ -27,10 +27,10 @@
   "files": [],
   "references": [
     {
-      "path": "./projects/editor-core/tsconfig.lib.json"
+      "path": "./editor-core/tsconfig.lib.json"
     },
     {
-      "path": "./projects/editor-core/tsconfig.spec.json"
+      "path": "./editor-core/tsconfig.spec.json"
     }
   ]
 }

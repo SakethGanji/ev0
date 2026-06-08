@@ -4,25 +4,25 @@
   "cli": {
     "packageManager": "npm"
   },
-  "newProjectRoot": "projects",
+  "newProjectRoot": ".",
   "projects": {
     "editor-core": {
       "projectType": "library",
-      "root": "projects/editor-core",
-      "sourceRoot": "projects/editor-core/src",
+      "root": "editor-core",
+      "sourceRoot": "editor-core/src",
       "prefix": "tip",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:ng-packagr",
           "options": {
-            "project": "projects/editor-core/ng-package.json"
+            "project": "editor-core/ng-package.json"
           },
           "configurations": {
             "production": {
-              "tsConfig": "projects/editor-core/tsconfig.lib.prod.json"
+              "tsConfig": "editor-core/tsconfig.lib.prod.json"
             },
             "development": {
-              "tsConfig": "projects/editor-core/tsconfig.lib.json"
+              "tsConfig": "editor-core/tsconfig.lib.json"
             }
           },
           "defaultConfiguration": "production"
@@ -30,7 +30,7 @@
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "tsConfig": "projects/editor-core/tsconfig.spec.json"
+            "tsConfig": "editor-core/tsconfig.spec.json"
           }
         }
       }
