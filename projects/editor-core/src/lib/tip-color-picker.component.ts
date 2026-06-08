@@ -8,6 +8,7 @@ import {
   signal,
   ViewEncapsulation,
 } from '@angular/core';
+import { NgFor, NgIf } from '@angular/common';
 import type { Editor } from '@tiptap/core';
 import { TipIconComponent } from './tip-icon.component';
 import { useEditorState } from './use-editor-state';
@@ -38,7 +39,7 @@ const PALETTE: ReadonlyArray<{ name: string; value: string }> = [
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [TipIconComponent],
+  imports: [NgFor, NgIf, TipIconComponent],
   host: {
     '(document:click)': 'onDocumentClick($event)',
     '(document:keydown.escape)': 'close()',
@@ -63,30 +64,27 @@ const PALETTE: ReadonlyArray<{ name: string; value: string }> = [
         </span>
         <tip-icon name="chevron-down" [size]="12" />
       </button>
-      @if (open()) {
-        <div class="tip-color-picker__popover" role="dialog">
+      <div *ngIf="open()" class="tip-color-picker__popover" role="dialog">
+        <button
+          type="button"
+          class="tip-color-picker__clear"
+          [class.is-current]="!currentSwatch()"
+          (click)="apply(null)"
+          title="Remove color"
+        >No color</button>
+        <div class="tip-color-picker__grid">
           <button
+            *ngFor="let swatch of palette; trackBy: trackBySwatch"
             type="button"
-            class="tip-color-picker__clear"
-            [class.is-current]="!currentSwatch()"
-            (click)="apply(null)"
-            title="Remove color"
-          >No color</button>
-          <div class="tip-color-picker__grid">
-            @for (swatch of palette; track swatch.value) {
-              <button
-                type="button"
-                class="tip-color-picker__swatch"
-                [class.is-current]="currentSwatch() === swatch.value.toLowerCase()"
-                [style.background-color]="swatch.value"
-                [title]="swatch.name"
-                [attr.aria-label]="swatch.name"
-                (click)="apply(swatch.value)"
-              ></button>
-            }
-          </div>
+            class="tip-color-picker__swatch"
+            [class.is-current]="currentSwatch() === swatch.value.toLowerCase()"
+            [style.background-color]="swatch.value"
+            [title]="swatch.name"
+            [attr.aria-label]="swatch.name"
+            (click)="apply(swatch.value)"
+          ></button>
         </div>
-      }
+      </div>
     </div>
   `,
   styles: `
@@ -222,6 +220,10 @@ export class TipColorPickerComponent {
     const value = this.currentColorState();
     return value ? value.toLowerCase() : null;
   });
+
+  protected trackBySwatch(_: number, swatch: { value: string }): string {
+    return swatch.value;
+  }
 
   protected toggle(event: MouseEvent): void {
     event.stopPropagation();

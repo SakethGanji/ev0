@@ -8,6 +8,7 @@ import {
   signal,
   ViewEncapsulation,
 } from '@angular/core';
+import { NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
 import type { Editor } from '@tiptap/core';
 import { TipIconComponent } from './tip-icon.component';
 
@@ -22,7 +23,7 @@ const DEFAULT_MAX_INLINE_BYTES = 5 * 1024 * 1024;
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [TipIconComponent],
+  imports: [NgIf, NgSwitch, NgSwitchCase, TipIconComponent],
   host: {
     '(document:click)': 'onDocumentClick($event)',
     '(document:keydown.escape)': 'close()',
@@ -41,104 +42,97 @@ const DEFAULT_MAX_INLINE_BYTES = 5 * 1024 * 1024;
       >
         <tip-icon [name]="kind() === 'image' ? 'image' : 'video'" />
       </button>
-      @if (open()) {
-        <div class="tip-media-insert__popover" role="dialog" aria-label="Insert media">
-          <div class="tip-media-insert__tabs" role="tablist">
-            <button
-              type="button"
-              role="tab"
-              class="tip-media-insert__tab"
-              [class.is-active]="tab() === 'upload'"
-              (click)="setTab('upload')"
-            >Upload</button>
-            <button
-              type="button"
-              role="tab"
-              class="tip-media-insert__tab"
-              [class.is-active]="tab() === 'url'"
-              (click)="setTab('url')"
-            >URL</button>
-            @if (kind() === 'video') {
-              <button
-                type="button"
-                role="tab"
-                class="tip-media-insert__tab"
-                [class.is-active]="tab() === 'embed'"
-                (click)="setTab('embed')"
-              >Embed</button>
-            }
-          </div>
-
-          @switch (tab()) {
-            @case ('upload') {
-              <div
-                class="tip-media-insert__drop"
-                [class.is-dragover]="dragover()"
-                (dragover)="onDragOver($event)"
-                (dragleave)="onDragLeave($event)"
-                (drop)="onDrop($event)"
-                (click)="fileInput.click()"
-              >
-                <tip-icon name="upload" [size]="22" />
-                <p>Drop a file or click to browse</p>
-                <small>{{ kind() === 'image' ? 'PNG, JPG, GIF, WebP, SVG' : 'MP4, WebM, OGG' }}</small>
-              </div>
-              <input
-                #fileInput
-                type="file"
-                [attr.accept]="kind() === 'image' ? 'image/*' : 'video/*'"
-                (change)="onFile($event)"
-                hidden
-              />
-            }
-            @case ('url') {
-              <label class="tip-media-insert__label">
-                <span>{{ kind() === 'image' ? 'Image URL' : 'Video URL' }}</span>
-                <input
-                  class="tip-media-insert__input"
-                  type="url"
-                  [placeholder]="kind() === 'image' ? 'https://…/photo.jpg' : 'https://…/clip.mp4'"
-                  [value]="urlValue()"
-                  (input)="urlValue.set($any($event.target).value)"
-                  (keydown.enter)="submitUrl()"
-                />
-              </label>
-              <button
-                type="button"
-                class="tip-media-insert__submit"
-                (click)="submitUrl()"
-                [disabled]="!urlValue().trim()"
-              >Insert</button>
-            }
-            @case ('embed') {
-              <label class="tip-media-insert__label">
-                <span>YouTube / Vimeo URL</span>
-                <input
-                  class="tip-media-insert__input"
-                  type="url"
-                  placeholder="https://youtube.com/watch?v=…"
-                  [value]="embedValue()"
-                  (input)="embedValue.set($any($event.target).value)"
-                  (keydown.enter)="submitEmbed()"
-                />
-              </label>
-              <button
-                type="button"
-                class="tip-media-insert__submit"
-                (click)="submitEmbed()"
-                [disabled]="!embedValue().trim()"
-              >Embed</button>
-            }
-          }
-
-          @if (busy()) {
-            <div class="tip-media-insert__status">Uploading…</div>
-          }
-          @if (error()) {
-            <div class="tip-media-insert__error" role="alert">{{ error() }}</div>
-          }
+      <div *ngIf="open()" class="tip-media-insert__popover" role="dialog" aria-label="Insert media">
+        <div class="tip-media-insert__tabs" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            class="tip-media-insert__tab"
+            [class.is-active]="tab() === 'upload'"
+            (click)="setTab('upload')"
+          >Upload</button>
+          <button
+            type="button"
+            role="tab"
+            class="tip-media-insert__tab"
+            [class.is-active]="tab() === 'url'"
+            (click)="setTab('url')"
+          >URL</button>
+          <button
+            *ngIf="kind() === 'video'"
+            type="button"
+            role="tab"
+            class="tip-media-insert__tab"
+            [class.is-active]="tab() === 'embed'"
+            (click)="setTab('embed')"
+          >Embed</button>
         </div>
-      }
+
+        <ng-container [ngSwitch]="tab()">
+          <ng-container *ngSwitchCase="'upload'">
+            <div
+              class="tip-media-insert__drop"
+              [class.is-dragover]="dragover()"
+              (dragover)="onDragOver($event)"
+              (dragleave)="onDragLeave($event)"
+              (drop)="onDrop($event)"
+              (click)="fileInput.click()"
+            >
+              <tip-icon name="upload" [size]="22" />
+              <p>Drop a file or click to browse</p>
+              <small>{{ kind() === 'image' ? 'PNG, JPG, GIF, WebP, SVG' : 'MP4, WebM, OGG' }}</small>
+            </div>
+            <input
+              #fileInput
+              type="file"
+              [attr.accept]="kind() === 'image' ? 'image/*' : 'video/*'"
+              (change)="onFile($event)"
+              hidden
+            />
+          </ng-container>
+          <ng-container *ngSwitchCase="'url'">
+            <label class="tip-media-insert__label">
+              <span>{{ kind() === 'image' ? 'Image URL' : 'Video URL' }}</span>
+              <input
+                class="tip-media-insert__input"
+                type="url"
+                [placeholder]="kind() === 'image' ? 'https://…/photo.jpg' : 'https://…/clip.mp4'"
+                [value]="urlValue()"
+                (input)="urlValue.set($any($event.target).value)"
+                (keydown.enter)="submitUrl()"
+              />
+            </label>
+            <button
+              type="button"
+              class="tip-media-insert__submit"
+              (click)="submitUrl()"
+              [disabled]="!urlValue().trim()"
+            >Insert</button>
+          </ng-container>
+          <ng-container *ngSwitchCase="'embed'">
+            <label class="tip-media-insert__label">
+              <span>YouTube / Vimeo URL</span>
+              <input
+                class="tip-media-insert__input"
+                type="url"
+                placeholder="https://youtube.com/watch?v=…"
+                [value]="embedValue()"
+                (input)="embedValue.set($any($event.target).value)"
+                (keydown.enter)="submitEmbed()"
+              />
+            </label>
+            <button
+              type="button"
+              class="tip-media-insert__submit"
+              (click)="submitEmbed()"
+              [disabled]="!embedValue().trim()"
+            >Embed</button>
+          </ng-container>
+        </ng-container>
+
+        <div *ngIf="busy()" class="tip-media-insert__status">Uploading…</div>
+        <div *ngIf="error()" class="tip-media-insert__error" role="alert">{{ error() }}</div>
+      </div>
     </div>
   `,
   styles: `

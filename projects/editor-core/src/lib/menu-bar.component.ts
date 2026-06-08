@@ -9,6 +9,7 @@ import {
   signal,
   ViewEncapsulation,
 } from '@angular/core';
+import { NgFor, NgIf } from '@angular/common';
 import type { Editor } from '@tiptap/core';
 import {
   menuBarStateSelector,
@@ -101,6 +102,8 @@ const LINE_HEIGHT_OPTIONS: ReadonlyArray<SelectOption> = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   imports: [
+    NgFor,
+    NgIf,
     TipIconComponent,
     TipColorPickerComponent,
     TipExportMenuComponent,
@@ -113,7 +116,7 @@ const LINE_HEIGHT_OPTIONS: ReadonlyArray<SelectOption> = [
     '(document:keydown.escape)': 'closeInsertMenu()',
   },
   template: `
-    @if (editor()) {
+    <ng-container *ngIf="editor()">
       <div class="tip-menu-bar" role="toolbar" aria-label="Editor toolbar">
         <!-- History -->
         <div class="tip-menu-bar__group">
@@ -146,12 +149,11 @@ const LINE_HEIGHT_OPTIONS: ReadonlyArray<SelectOption> = [
             title="Paragraph style"
             aria-label="Paragraph style"
           >
-            @for (opt of styleOptions; track opt.value) {
-              <option [value]="opt.value">{{ opt.label }}</option>
-            }
-            @if (state().blockType === 'other') {
-              <option value="other" disabled>—</option>
-            }
+            <option
+              *ngFor="let opt of styleOptions; trackBy: trackByValue"
+              [value]="opt.value"
+            >{{ opt.label }}</option>
+            <option *ngIf="state().blockType === 'other'" value="other" disabled>—</option>
           </select>
         </div>
 
@@ -166,9 +168,10 @@ const LINE_HEIGHT_OPTIONS: ReadonlyArray<SelectOption> = [
             title="Font family"
             aria-label="Font family"
           >
-            @for (opt of fontFamilyOptions; track opt.value ?? '_default') {
-              <option [value]="opt.value ?? ''">{{ opt.label }}</option>
-            }
+            <option
+              *ngFor="let opt of fontFamilyOptions; trackBy: trackByOptionValue"
+              [value]="opt.value ?? ''"
+            >{{ opt.label }}</option>
           </select>
           <select
             class="tip-menu-bar__select tip-menu-bar__select--size"
@@ -177,9 +180,10 @@ const LINE_HEIGHT_OPTIONS: ReadonlyArray<SelectOption> = [
             title="Font size"
             aria-label="Font size"
           >
-            @for (opt of fontSizeOptions; track opt.value ?? '_default') {
-              <option [value]="opt.value ?? ''">{{ opt.label }}</option>
-            }
+            <option
+              *ngFor="let opt of fontSizeOptions; trackBy: trackByOptionValue"
+              [value]="opt.value ?? ''"
+            >{{ opt.label }}</option>
           </select>
           <select
             class="tip-menu-bar__select tip-menu-bar__select--line"
@@ -188,9 +192,10 @@ const LINE_HEIGHT_OPTIONS: ReadonlyArray<SelectOption> = [
             title="Line height"
             aria-label="Line height"
           >
-            @for (opt of lineHeightOptions; track opt.value ?? '_default') {
-              <option [value]="opt.value ?? ''">↕ {{ opt.label }}</option>
-            }
+            <option
+              *ngFor="let opt of lineHeightOptions; trackBy: trackByOptionValue"
+              [value]="opt.value ?? ''"
+            >↕ {{ opt.label }}</option>
           </select>
         </div>
 
@@ -341,108 +346,97 @@ const LINE_HEIGHT_OPTIONS: ReadonlyArray<SelectOption> = [
               <span>Insert</span>
               <tip-icon name="chevron-down" [size]="12" />
             </button>
-            @if (insertOpen()) {
-              <div class="tip-menu-bar__popover" role="menu">
-                <button
-                  type="button"
-                  class="tip-menu-bar__menu-item"
-                  role="menuitem"
-                  (click)="insertTable()"
-                ><tip-icon name="table" /> <span>Table</span></button>
-                <button
-                  type="button"
-                  class="tip-menu-bar__menu-item"
-                  role="menuitem"
-                  (click)="runFromMenu('setHorizontalRule')"
-                ><tip-icon name="horizontal-rule" /> <span>Horizontal rule</span></button>
-                <button
-                  type="button"
-                  class="tip-menu-bar__menu-item"
-                  role="menuitem"
-                  [class.is-active]="state().isCodeBlock"
-                  (click)="runFromMenu('toggleCodeBlock')"
-                ><tip-icon name="code-block" /> <span>Code block</span></button>
-                <button
-                  type="button"
-                  class="tip-menu-bar__menu-item"
-                  role="menuitem"
-                  (click)="runFromMenu('setHardBreak')"
-                ><tip-icon name="corner-down-left" /> <span>Line break</span></button>
-              </div>
-            }
+            <div *ngIf="insertOpen()" class="tip-menu-bar__popover" role="menu">
+              <button
+                type="button"
+                class="tip-menu-bar__menu-item"
+                role="menuitem"
+                (click)="insertTable()"
+              ><tip-icon name="table" /> <span>Table</span></button>
+              <button
+                type="button"
+                class="tip-menu-bar__menu-item"
+                role="menuitem"
+                (click)="runFromMenu('setHorizontalRule')"
+              ><tip-icon name="horizontal-rule" /> <span>Horizontal rule</span></button>
+              <button
+                type="button"
+                class="tip-menu-bar__menu-item"
+                role="menuitem"
+                [class.is-active]="state().isCodeBlock"
+                (click)="runFromMenu('toggleCodeBlock')"
+              ><tip-icon name="code-block" /> <span>Code block</span></button>
+              <button
+                type="button"
+                class="tip-menu-bar__menu-item"
+                role="menuitem"
+                (click)="runFromMenu('setHardBreak')"
+              ><tip-icon name="corner-down-left" /> <span>Line break</span></button>
+            </div>
           </div>
-          @if (showImage()) {
-            <tip-media-insert
-              [editor]="editor()"
-              kind="image"
-              [uploadHandler]="imageUploadHandler()"
-            />
-          }
-          @if (showVideo()) {
-            <tip-media-insert
-              [editor]="editor()"
-              kind="video"
-              [uploadHandler]="videoUploadHandler()"
-            />
-          }
+          <tip-media-insert
+            *ngIf="showImage()"
+            [editor]="editor()"
+            kind="image"
+            [uploadHandler]="imageUploadHandler()"
+          />
+          <tip-media-insert
+            *ngIf="showVideo()"
+            [editor]="editor()"
+            kind="video"
+            [uploadHandler]="videoUploadHandler()"
+          />
         </div>
 
-        @if (showImport() || showFind() || showToc() || showComments()) {
+        <ng-container *ngIf="showImport() || showFind() || showToc() || showComments()">
           <span class="tip-menu-bar__divider" aria-hidden="true"></span>
           <div class="tip-menu-bar__group">
-            @if (showImport()) {
-              <tip-import-button [editor]="editor()" [mode]="importMode()" />
-            }
-            @if (showFind()) {
-              <button
-                type="button"
-                class="tip-menu-bar__btn"
-                (click)="toggleFind()"
-                [class.is-active]="findVisible()"
-                [attr.aria-pressed]="findVisible()"
-                title="Find and replace (Ctrl+F)"
-                aria-label="Find and replace"
-              ><tip-icon name="search" /></button>
-            }
-            @if (showComments()) {
-              <button
-                type="button"
-                class="tip-menu-bar__btn"
-                (click)="toggleComments()"
-                [class.is-active]="commentsVisible()"
-                [attr.aria-pressed]="commentsVisible()"
-                title="Toggle comments"
-                aria-label="Toggle comments"
-              ><tip-icon name="quote" /></button>
-            }
-            @if (showToc()) {
-              <button
-                type="button"
-                class="tip-menu-bar__btn"
-                (click)="toggleToc()"
-                [class.is-active]="tocVisible()"
-                [attr.aria-pressed]="tocVisible()"
-                title="Toggle table of contents"
-                aria-label="Toggle table of contents"
-              ><tip-icon name="panel-right" /></button>
-            }
+            <tip-import-button *ngIf="showImport()" [editor]="editor()" [mode]="importMode()" />
+            <button
+              *ngIf="showFind()"
+              type="button"
+              class="tip-menu-bar__btn"
+              (click)="toggleFind()"
+              [class.is-active]="findVisible()"
+              [attr.aria-pressed]="findVisible()"
+              title="Find and replace (Ctrl+F)"
+              aria-label="Find and replace"
+            ><tip-icon name="search" /></button>
+            <button
+              *ngIf="showComments()"
+              type="button"
+              class="tip-menu-bar__btn"
+              (click)="toggleComments()"
+              [class.is-active]="commentsVisible()"
+              [attr.aria-pressed]="commentsVisible()"
+              title="Toggle comments"
+              aria-label="Toggle comments"
+            ><tip-icon name="quote" /></button>
+            <button
+              *ngIf="showToc()"
+              type="button"
+              class="tip-menu-bar__btn"
+              (click)="toggleToc()"
+              [class.is-active]="tocVisible()"
+              [attr.aria-pressed]="tocVisible()"
+              title="Toggle table of contents"
+              aria-label="Toggle table of contents"
+            ><tip-icon name="panel-right" /></button>
           </div>
-        }
+        </ng-container>
 
-        @if (showExport()) {
+        <ng-container *ngIf="showExport()">
           <span class="tip-menu-bar__spacer" aria-hidden="true"></span>
           <div class="tip-menu-bar__group">
             <tip-export-menu [editor]="editor()" [filename]="filename()" />
           </div>
-        }
+        </ng-container>
       </div>
 
-      @if (showFind()) {
-        <div class="tip-menu-bar__find-slot">
-          <tip-find-replace [editor]="editor()" [(visible)]="findVisible" />
-        </div>
-      }
-    }
+      <div *ngIf="showFind()" class="tip-menu-bar__find-slot">
+        <tip-find-replace [editor]="editor()" [(visible)]="findVisible" />
+      </div>
+    </ng-container>
   `,
   styles: `
     :host { display: block; }
@@ -625,6 +619,14 @@ export class MenuBarComponent {
   private readonly hostRef = inject(ElementRef<HTMLElement>);
   private readonly rawState = useEditorState(this.editor, menuBarStateSelector);
   readonly state = computed<MenuBarState>(() => this.rawState() ?? EMPTY_STATE);
+
+  trackByValue<T extends { value: unknown }>(_: number, opt: T): unknown {
+    return opt.value;
+  }
+
+  trackByOptionValue(_: number, opt: SelectOption): string {
+    return opt.value ?? '_default';
+  }
 
   toggleFind(): void {
     this.findVisible.update((v) => !v);

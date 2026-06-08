@@ -1,4 +1,4 @@
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, NgIf } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -58,6 +58,7 @@ const EMPTY_COUNTS: TipEditorCounts = { characters: 0, words: 0 };
   providers: [TipCommentsStore],
   imports: [
     DecimalPipe,
+    NgIf,
     MenuBarComponent,
     TipEditorContentComponent,
     TipTableOfContentsComponent,
@@ -93,46 +94,44 @@ const EMPTY_COUNTS: TipEditorCounts = { characters: 0, words: 0 };
           <tip-editor-content [editor]="editor()" [embedded]="true" />
         </div>
 
-        @if (showToc()) {
-          <aside
-            class="tip-editor__toc tip-editor__panel"
-            [class.is-open]="tocOpen()"
-            [attr.aria-hidden]="!tocOpen()"
-          >
-            <div class="tip-editor__panel-header">
-              <span>Contents</span>
-              <button
-                type="button"
-                class="tip-editor__panel-close"
-                (click)="tocOpen.set(false)"
-                aria-label="Hide table of contents"
-              >×</button>
-            </div>
-            <tip-toc [anchors]="tocAnchors()" [editor]="editor()" />
-          </aside>
-        }
+        <aside
+          *ngIf="showToc()"
+          class="tip-editor__toc tip-editor__panel"
+          [class.is-open]="tocOpen()"
+          [attr.aria-hidden]="!tocOpen()"
+        >
+          <div class="tip-editor__panel-header">
+            <span>Contents</span>
+            <button
+              type="button"
+              class="tip-editor__panel-close"
+              (click)="tocOpen.set(false)"
+              aria-label="Hide table of contents"
+            >×</button>
+          </div>
+          <tip-toc [anchors]="tocAnchors()" [editor]="editor()" />
+        </aside>
 
-        @if (showComments()) {
-          <aside
-            class="tip-editor__comments tip-editor__panel"
-            [class.is-open]="commentsOpen()"
-            [attr.aria-hidden]="!commentsOpen()"
-          >
-            <tip-comments-sidebar
-              [embedded]="true"
-              [threads]="commentsStore.threads()"
-              [orphanedIds]="orphanedIds()"
-              [selectedId]="selectedThreadId()"
-              [showClose]="true"
-              (closeClicked)="commentsOpen.set(false)"
-              (selectClicked)="onThreadSelected($event)"
-              (replyClicked)="reply($event.threadId, $event.body)"
-              (resolveClicked)="resolveThread($event)"
-              (unresolveClicked)="unresolveThread($event)"
-              (removeClicked)="removeThread($event)"
-            />
-          </aside>
-        }
+        <aside
+          *ngIf="showComments()"
+          class="tip-editor__comments tip-editor__panel"
+          [class.is-open]="commentsOpen()"
+          [attr.aria-hidden]="!commentsOpen()"
+        >
+          <tip-comments-sidebar
+            [embedded]="true"
+            [threads]="commentsStore.threads()"
+            [orphanedIds]="orphanedIds()"
+            [selectedId]="selectedThreadId()"
+            [showClose]="true"
+            (closeClicked)="commentsOpen.set(false)"
+            (selectClicked)="onThreadSelected($event)"
+            (replyClicked)="reply($event.threadId, $event.body)"
+            (resolveClicked)="resolveThread($event)"
+            (unresolveClicked)="unresolveThread($event)"
+            (removeClicked)="removeThread($event)"
+          />
+        </aside>
       </div>
 
       <tip-comment-overlay
@@ -142,27 +141,25 @@ const EMPTY_COUNTS: TipEditorCounts = { characters: 0, words: 0 };
       />
       <tip-table-bubble [editor]="editor()" />
 
-      @if (showFooter()) {
-        <footer class="tip-editor__footer">
-          @if (characterLimit() != null) {
-            <span
-              class="tip-editor__stat"
-              [class.is-warning]="nearLimit()"
-              [class.is-over]="overLimit()"
-            >{{ counts().characters | number }} / {{ characterLimit() | number }} characters</span>
-          } @else {
-            <span class="tip-editor__stat">{{ counts().characters | number }} characters</span>
-          }
+      <footer *ngIf="showFooter()" class="tip-editor__footer">
+        <span
+          *ngIf="characterLimit() != null; else charactersNoLimit"
+          class="tip-editor__stat"
+          [class.is-warning]="nearLimit()"
+          [class.is-over]="overLimit()"
+        >{{ counts().characters | number }} / {{ characterLimit() | number }} characters</span>
+        <ng-template #charactersNoLimit>
+          <span class="tip-editor__stat">{{ counts().characters | number }} characters</span>
+        </ng-template>
+        <span class="tip-editor__sep" aria-hidden="true">·</span>
+        <span class="tip-editor__stat">{{ counts().words | number }} words</span>
+        <ng-container *ngIf="counts().characters > 0">
           <span class="tip-editor__sep" aria-hidden="true">·</span>
-          <span class="tip-editor__stat">{{ counts().words | number }} words</span>
-          @if (counts().characters > 0) {
-            <span class="tip-editor__sep" aria-hidden="true">·</span>
-            <span class="tip-editor__stat tip-editor__stat--muted">
-              ~{{ readingMinutes() }} min read
-            </span>
-          }
-        </footer>
-      }
+          <span class="tip-editor__stat tip-editor__stat--muted">
+            ~{{ readingMinutes() }} min read
+          </span>
+        </ng-container>
+      </footer>
     </div>
   `,
   styles: `

@@ -8,6 +8,7 @@ import {
   viewChild,
   ViewEncapsulation,
 } from '@angular/core';
+import { NgIf } from '@angular/common';
 import type { Editor } from '@tiptap/core';
 import {
   DEFAULT_IMPORT_ACCEPT,
@@ -22,7 +23,7 @@ import { TipIconComponent } from './tip-icon.component';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [TipIconComponent],
+  imports: [NgIf, TipIconComponent],
   template: `
     <button
       type="button"
@@ -42,9 +43,7 @@ import { TipIconComponent } from './tip-icon.component';
       (change)="onFile($event)"
       hidden
     />
-    @if (error()) {
-      <span class="tip-import-button__error" role="alert">{{ error() }}</span>
-    }
+    <span *ngIf="error()" class="tip-import-button__error" role="alert">{{ error() }}</span>
   `,
   styles: `
     :host { display: inline-flex; align-items: center; gap: 0.4rem; }

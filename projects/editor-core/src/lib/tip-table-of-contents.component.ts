@@ -1,3 +1,4 @@
+import { NgFor, NgIf } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -27,23 +28,22 @@ export interface TipTocAnchor {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
+  imports: [NgFor, NgIf],
   template: `
-    @if (anchors().length === 0) {
-      <p class="tip-toc__empty">No headings yet</p>
-    } @else {
+    <p *ngIf="anchors().length === 0; else hasAnchors" class="tip-toc__empty">No headings yet</p>
+    <ng-template #hasAnchors>
       <nav class="tip-toc" aria-label="Table of contents">
-        @for (anchor of anchors(); track anchor.id) {
-          <a
-            class="tip-toc__item"
-            [href]="'#' + anchor.id"
-            [style.padding-left.rem]="0.6 + (anchor.level - 1) * 0.85"
-            [class.is-active]="anchor.isActive"
-            [class.is-scrolled-over]="anchor.isScrolledOver"
-            (click)="onClick($event, anchor)"
-          >{{ anchor.textContent || 'Untitled' }}</a>
-        }
+        <a
+          *ngFor="let anchor of anchors(); trackBy: trackByAnchor"
+          class="tip-toc__item"
+          [href]="'#' + anchor.id"
+          [style.padding-left.rem]="0.6 + (anchor.level - 1) * 0.85"
+          [class.is-active]="anchor.isActive"
+          [class.is-scrolled-over]="anchor.isScrolledOver"
+          (click)="onClick($event, anchor)"
+        >{{ anchor.textContent || 'Untitled' }}</a>
       </nav>
-    }
+    </ng-template>
   `,
   styles: `
     tip-toc {
@@ -95,6 +95,10 @@ export interface TipTocAnchor {
 export class TipTableOfContentsComponent {
   readonly anchors = input<readonly TipTocAnchor[]>([]);
   readonly editor = input<Editor | null>(null);
+
+  protected trackByAnchor(_: number, anchor: TipTocAnchor): string {
+    return anchor.id;
+  }
 
   protected onClick(event: MouseEvent, anchor: TipTocAnchor): void {
     event.preventDefault();

@@ -7,6 +7,7 @@ import {
   signal,
   ViewEncapsulation,
 } from '@angular/core';
+import { NgIf } from '@angular/common';
 import type { Editor } from '@tiptap/core';
 import { TipIconComponent } from './tip-icon.component';
 import { useEditorState } from './use-editor-state';
@@ -33,9 +34,9 @@ interface TableSelectionInfo {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [TipIconComponent],
+  imports: [NgIf, TipIconComponent],
   template: `
-    @if (visible() && pos(); as p) {
+    <ng-container *ngIf="visible() && pos() as p">
       <div
         class="tip-bubble tip-bubble--table"
         [style.top.px]="p.top"
@@ -85,7 +86,7 @@ interface TableSelectionInfo {
           </button>
         </div>
       </div>
-    }
+    </ng-container>
   `,
   styles: `
     :host { display: contents; }

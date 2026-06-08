@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgFor, NgIf } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -6,87 +6,89 @@ import {
   output,
   ViewEncapsulation,
 } from '@angular/core';
-import type { TipThread } from './comments-store';
+import type { TipThread, TipComment } from './comments-store';
 
 @Component({
   selector: 'tip-comments-sidebar',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [DatePipe],
+  imports: [DatePipe, NgFor, NgIf],
   template: `
     <aside class="tip-comments" [class.tip-comments--embedded]="embedded()">
       <header class="tip-comments__header">
         <h3>Comments</h3>
-        @if (showClose()) {
-          <button
-            type="button"
-            class="tip-comments__close"
-            (click)="closeClicked.emit()"
-            aria-label="Hide comments"
-            title="Hide comments"
-          >×</button>
-        }
+        <button
+          *ngIf="showClose()"
+          type="button"
+          class="tip-comments__close"
+          (click)="closeClicked.emit()"
+          aria-label="Hide comments"
+          title="Hide comments"
+        >×</button>
       </header>
 
-      @if (threads().length === 0) {
-        <p class="tip-comments__empty">
-          Select text in the editor, then click the <strong>Comment</strong>
-          button that appears.
-        </p>
-      }
+      <p *ngIf="threads().length === 0" class="tip-comments__empty">
+        Select text in the editor, then click the <strong>Comment</strong>
+        button that appears.
+      </p>
 
-      @for (thread of threads(); track thread.id) {
-        <article
-          class="tip-comments__thread"
-          [class.is-active]="selectedId() === thread.id"
-          [class.is-resolved]="thread.status === 'resolved'"
-          [class.is-orphan]="orphanedIds().includes(thread.id)"
-          (click)="selectClicked.emit(thread.id)"
+      <article
+        *ngFor="let thread of threads(); trackBy: trackByThread"
+        class="tip-comments__thread"
+        [class.is-active]="selectedId() === thread.id"
+        [class.is-resolved]="thread.status === 'resolved'"
+        [class.is-orphan]="orphanedIds().includes(thread.id)"
+        (click)="selectClicked.emit(thread.id)"
+      >
+        <div class="tip-comments__meta">
+          <span class="tip-comments__author">{{ thread.createdBy }}</span>
+          <span class="tip-comments__date">{{ thread.createdAt | date: 'short' }}</span>
+          <span
+            *ngIf="orphanedIds().includes(thread.id)"
+            class="tip-comments__badge tip-comments__badge--orphan"
+          >orphaned</span>
+          <span
+            *ngIf="thread.status === 'resolved'"
+            class="tip-comments__badge tip-comments__badge--resolved"
+          >resolved</span>
+        </div>
+
+        <div
+          *ngFor="let comment of thread.comments; let isFirst = first; trackBy: trackByComment"
+          class="tip-comments__comment"
         >
-          <div class="tip-comments__meta">
-            <span class="tip-comments__author">{{ thread.createdBy }}</span>
-            <span class="tip-comments__date">{{ thread.createdAt | date: 'short' }}</span>
-            @if (orphanedIds().includes(thread.id)) {
-              <span class="tip-comments__badge tip-comments__badge--orphan">orphaned</span>
-            }
-            @if (thread.status === 'resolved') {
-              <span class="tip-comments__badge tip-comments__badge--resolved">resolved</span>
-            }
+          <p>{{ comment.body }}</p>
+          <small *ngIf="!isFirst">{{ comment.author }} · {{ comment.createdAt | date: 'shortTime' }}</small>
+        </div>
+
+        <div
+          *ngIf="thread.status === 'open'"
+          class="tip-comments__reply"
+          (click)="$event.stopPropagation()"
+        >
+          <textarea
+            #replyInput
+            placeholder="Reply…"
+            rows="2"
+            (keydown.meta.enter)="sendReply(thread.id, replyInput); $event.preventDefault()"
+            (keydown.control.enter)="sendReply(thread.id, replyInput); $event.preventDefault()"
+          ></textarea>
+          <div class="tip-comments__actions">
+            <button type="button" class="tip-comments__primary" (click)="sendReply(thread.id, replyInput)">Reply</button>
+            <button type="button" (click)="resolveClicked.emit(thread.id)">Resolve</button>
+            <button type="button" class="tip-comments__danger" (click)="removeClicked.emit(thread.id)">Delete</button>
           </div>
-
-          @for (comment of thread.comments; track comment.id) {
-            <div class="tip-comments__comment">
-              <p>{{ comment.body }}</p>
-              @if (!$first) {
-                <small>{{ comment.author }} · {{ comment.createdAt | date: 'shortTime' }}</small>
-              }
-            </div>
-          }
-
-          @if (thread.status === 'open') {
-            <div class="tip-comments__reply" (click)="$event.stopPropagation()">
-              <textarea
-                #replyInput
-                placeholder="Reply…"
-                rows="2"
-                (keydown.meta.enter)="sendReply(thread.id, replyInput); $event.preventDefault()"
-                (keydown.control.enter)="sendReply(thread.id, replyInput); $event.preventDefault()"
-              ></textarea>
-              <div class="tip-comments__actions">
-                <button type="button" class="tip-comments__primary" (click)="sendReply(thread.id, replyInput)">Reply</button>
-                <button type="button" (click)="resolveClicked.emit(thread.id)">Resolve</button>
-                <button type="button" class="tip-comments__danger" (click)="removeClicked.emit(thread.id)">Delete</button>
-              </div>
-            </div>
-          } @else if (thread.status === 'resolved') {
-            <div class="tip-comments__actions" (click)="$event.stopPropagation()">
-              <button type="button" (click)="unresolveClicked.emit(thread.id)">Reopen</button>
-              <button type="button" class="tip-comments__danger" (click)="removeClicked.emit(thread.id)">Delete</button>
-            </div>
-          }
-        </article>
-      }
+        </div>
+        <div
+          *ngIf="thread.status === 'resolved'"
+          class="tip-comments__actions"
+          (click)="$event.stopPropagation()"
+        >
+          <button type="button" (click)="unresolveClicked.emit(thread.id)">Reopen</button>
+          <button type="button" class="tip-comments__danger" (click)="removeClicked.emit(thread.id)">Delete</button>
+        </div>
+      </article>
     </aside>
   `,
   styles: `
@@ -292,6 +294,14 @@ export class TipCommentsSidebarComponent {
   readonly resolveClicked = output<string>();
   readonly unresolveClicked = output<string>();
   readonly removeClicked = output<string>();
+
+  trackByThread(_: number, thread: TipThread): string {
+    return thread.id;
+  }
+
+  trackByComment(_: number, comment: TipComment): string {
+    return comment.id;
+  }
 
   sendReply(threadId: string, textarea: HTMLTextAreaElement): void {
     const body = textarea.value.trim();

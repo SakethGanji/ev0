@@ -12,6 +12,7 @@ import {
   viewChild,
   ViewEncapsulation,
 } from '@angular/core';
+import { NgIf } from '@angular/common';
 import type { Editor } from '@tiptap/core';
 import { getFindReplaceState } from './find-replace-extension';
 import { TipIconComponent } from './tip-icon.component';
@@ -36,12 +37,12 @@ interface FindReplaceCommands {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [TipIconComponent],
+  imports: [NgIf, TipIconComponent],
   host: {
     '(document:keydown)': 'onShortcut($event)',
   },
   template: `
-    @if (visible()) {
+    <ng-container *ngIf="visible()">
       <div class="tip-find-replace" role="dialog" aria-label="Find and replace">
         <div class="tip-find-replace__row">
           <input
@@ -80,30 +81,28 @@ interface FindReplaceCommands {
           ><tip-icon name="x" /></button>
         </div>
 
-        @if (showReplace()) {
-          <div class="tip-find-replace__row">
-            <input
-              class="tip-find-replace__input"
-              type="text"
-              placeholder="Replace"
-              [value]="replacement()"
-              (input)="onReplacementInput($event)"
-              (keydown.enter)="replaceOne($event)"
-            />
-            <button
-              type="button"
-              class="tip-find-replace__action"
-              (click)="replaceOne()"
-              [disabled]="matchCount() === 0"
-            >Replace</button>
-            <button
-              type="button"
-              class="tip-find-replace__action"
-              (click)="replaceAll()"
-              [disabled]="matchCount() === 0"
-            >Replace all</button>
-          </div>
-        }
+        <div *ngIf="showReplace()" class="tip-find-replace__row">
+          <input
+            class="tip-find-replace__input"
+            type="text"
+            placeholder="Replace"
+            [value]="replacement()"
+            (input)="onReplacementInput($event)"
+            (keydown.enter)="replaceOne($event)"
+          />
+          <button
+            type="button"
+            class="tip-find-replace__action"
+            (click)="replaceOne()"
+            [disabled]="matchCount() === 0"
+          >Replace</button>
+          <button
+            type="button"
+            class="tip-find-replace__action"
+            (click)="replaceAll()"
+            [disabled]="matchCount() === 0"
+          >Replace all</button>
+        </div>
 
         <div class="tip-find-replace__row tip-find-replace__toggles">
           <button
@@ -145,7 +144,7 @@ interface FindReplaceCommands {
           >↔</button>
         </div>
       </div>
-    }
+    </ng-container>
   `,
   styles: `
     .tip-find-replace {

@@ -11,6 +11,7 @@ import {
   viewChild,
   ViewEncapsulation,
 } from '@angular/core';
+import { NgIf } from '@angular/common';
 import type { Editor } from '@tiptap/core';
 import { TipIconComponent } from './tip-icon.component';
 import { useEditorState } from './use-editor-state';
@@ -66,13 +67,13 @@ const COMPOSER_HALF_WIDTH = 140;
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [TipIconComponent],
+  imports: [NgIf, TipIconComponent],
   host: {
     '(document:click)': 'onDocumentClick($event)',
     '(document:keydown.escape)': 'onEscape()',
   },
   template: `
-    @if (mode() !== 'hidden' && pos(); as p) {
+    <ng-container *ngIf="mode() !== 'hidden' && pos() as p">
       <div
         class="tip-bubble"
         [class.tip-bubble--composer]="mode() === 'composer'"
@@ -80,7 +81,7 @@ const COMPOSER_HALF_WIDTH = 140;
         [style.left.px]="p.left"
         (click)="$event.stopPropagation()"
       >
-        @if (mode() === 'toolbar') {
+        <ng-container *ngIf="mode() === 'toolbar'; else composerTpl">
           <div
             class="tip-bubble__toolbar"
             (mousedown)="$event.preventDefault()"
@@ -117,7 +118,7 @@ const COMPOSER_HALF_WIDTH = 140;
               title="Inline code"
               aria-label="Inline code"
             ><tip-icon name="code" [size]="14" /></button>
-            @if (commentsEnabled()) {
+            <ng-container *ngIf="commentsEnabled()">
               <span class="tip-bubble__sep" aria-hidden="true"></span>
               <button
                 type="button"
@@ -126,9 +127,10 @@ const COMPOSER_HALF_WIDTH = 140;
                 title="Comment on selection"
                 aria-label="Comment on selection"
               ><tip-icon name="message-square" [size]="14" /></button>
-            }
+            </ng-container>
           </div>
-        } @else {
+        </ng-container>
+        <ng-template #composerTpl>
           <div class="tip-bubble__composer">
             <textarea
               #ta
@@ -154,9 +156,9 @@ const COMPOSER_HALF_WIDTH = 140;
               >Cancel</button>
             </div>
           </div>
-        }
+        </ng-template>
       </div>
-    }
+    </ng-container>
   `,
   styles: `
     :host { display: contents; }

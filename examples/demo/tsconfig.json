@@ -26,11 +26,7 @@
   },
   "files": [],
   "references": [
-    {
-      "path": "./projects/editor-core/tsconfig.lib.json"
-    },
-    {
-      "path": "./projects/editor-core/tsconfig.spec.json"
-    }
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.spec.json" }
   ]
 }

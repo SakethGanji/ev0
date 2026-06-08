@@ -8,6 +8,7 @@ import {
   signal,
   ViewEncapsulation,
 } from '@angular/core';
+import { NgFor, NgIf } from '@angular/common';
 import type { Editor } from '@tiptap/core';
 import {
   downloadAs,
@@ -22,7 +23,7 @@ import { TipIconComponent } from './tip-icon.component';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [TipIconComponent],
+  imports: [NgFor, NgIf, TipIconComponent],
   host: {
     '(document:click)': 'onDocumentClick($event)',
     '(document:keydown.escape)': 'close()',
@@ -42,28 +43,23 @@ import { TipIconComponent } from './tip-icon.component';
         <tip-icon name="download" />
         <tip-icon name="chevron-down" [size]="12" />
       </button>
-      @if (open()) {
-        <div class="tip-export-menu__popover" role="menu">
-          <div class="tip-export-menu__title">Export as</div>
-          @for (opt of formats(); track opt.format) {
-            <button
-              type="button"
-              class="tip-export-menu__item"
-              role="menuitem"
-              [disabled]="busy() === opt.format"
-              (click)="choose(opt)"
-            >
-              <span class="tip-export-menu__label">{{ opt.label }}</span>
-              <span class="tip-export-menu__hint">
-                {{ busy() === opt.format ? 'working…' : '.' + opt.extension }}
-              </span>
-            </button>
-          }
-          @if (error()) {
-            <div class="tip-export-menu__error" role="alert">{{ error() }}</div>
-          }
-        </div>
-      }
+      <div *ngIf="open()" class="tip-export-menu__popover" role="menu">
+        <div class="tip-export-menu__title">Export as</div>
+        <button
+          *ngFor="let opt of formats(); trackBy: trackByFormat"
+          type="button"
+          class="tip-export-menu__item"
+          role="menuitem"
+          [disabled]="busy() === opt.format"
+          (click)="choose(opt)"
+        >
+          <span class="tip-export-menu__label">{{ opt.label }}</span>
+          <span class="tip-export-menu__hint">
+            {{ busy() === opt.format ? 'working…' : '.' + opt.extension }}
+          </span>
+        </button>
+        <div *ngIf="error()" class="tip-export-menu__error" role="alert">{{ error() }}</div>
+      </div>
     </div>
   `,
   styles: `
@@ -137,6 +133,10 @@ export class TipExportMenuComponent {
   protected onDocumentClick(event: MouseEvent): void {
     if (!this.open()) return;
     if (!this.hostRef.nativeElement.contains(event.target as Node)) this.close();
+  }
+
+  protected trackByFormat(_: number, opt: ExportFormatDescriptor): string {
+    return opt.format;
   }
 
   protected async choose(opt: ExportFormatDescriptor): Promise<void> {

@@ -2,8 +2,8 @@
   "name": "editor-core",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/common": "^20.3.0",
-    "@angular/core": "^20.3.0",
+    "@angular/common": "^17.3.0",
+    "@angular/core": "^17.3.0",
     "@tiptap/core": "^3.0.0",
     "@tiptap/pm": "^3.0.0",
     "@tiptap/starter-kit": "^3.0.0",
@@ -20,7 +20,7 @@
     "@tiptap/extension-typography": "^3.0.0",
     "turndown": "^7.0.0",
     "html-docx-js-typescript": "^0.1.5",
-    "marked": "^14.0.0",
+    "marked": "^14.0.0 || ^18.0.0",
     "mammoth": "^1.7.0"
   },
   "peerDependenciesMeta": {
